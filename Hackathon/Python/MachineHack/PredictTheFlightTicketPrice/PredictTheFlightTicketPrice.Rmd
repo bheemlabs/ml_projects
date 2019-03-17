@@ -49,7 +49,11 @@ dataset_dir = r'\datasets\\'
 import os
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 # Add more libraries here to have them in one place
+
+# Create inline plots in our notebook intead of creating popup of the plot. 
+# %matplotlib inline 
 ```
 
 ```{python}
@@ -92,6 +96,273 @@ train_data.values
 
 ```{python}
 train_data.values[0]
+```
+
+```{python}
+# Check null columns
+null_columns = train_data.columns[train_data.isnull().any()]
+train_data[null_columns].isnull().sum()
+```
+
+```{python}
+# check row where Route is null and Total_Stops is null
+train_data[train_data['Route'].isnull()]
+```
+
+```{python}
+# Checking the route on internet, we found that AirIndia flight AI-429/509 has 1 stop at Chennai(MAA) of 19h 25m
+# Impute missing values here
+train_data.loc[9039, 'Route'] = 'DEL → MAA → COK'
+train_data.loc[9039, 'Total_Stops'] = '1 stop'
+```
+
+```{python}
+# Check null columns
+null_columns = train_data.columns[train_data.isnull().any()]
+train_data[null_columns].isnull().sum() #None
+```
+
+```{python}
+train_data['Airline'].value_counts()
+```
+
+```{python}
+train_data['Source'].value_counts()
+```
+
+```{python}
+train_data['Destination'].value_counts()
+```
+
+```{python}
+# Convert Date_of_Journey column to proper datetime column
+train_data['Date_of_Journey'] = pd.to_datetime(train_data['Date_of_Journey'], format='%d/%m/%Y')
+train_data['Date_of_Journey'].head()
+```
+
+```{python}
+# Create new columnd with Day_Name from date to see if Prices are on higher side on weekends
+train_data['Day_name'] = train_data.Date_of_Journey.apply(lambda date: date.day_name())
+train_data['Day_name'].head()
+```
+
+```{python}
+# Plot avg Prices for each day name
+prices_by_day = train_data.groupby('Day_name').mean().plot(kind='bar')
+prices_by_day.set_xlabel("Day name")
+prices_by_day.set_ylabel("Price")
+prices_by_day.legend(loc='center left', bbox_to_anchor=(1,0.5))
+```
+
+```{python}
+# Plot avg prices for each airline
+prices_by_airline = train_data.groupby('Airline').mean().plot(kind='bar')
+prices_by_airline.set_xlabel('airline')
+prices_by_airline.set_ylabel('Price')
+prices_by_airline.legend(loc='center left', bbox_to_anchor=(1,0.5))
+
+```
+
+```{python}
+outlier_airlines = ['Jet Airways Business']
+train_data_filter = train_data.loc[train_data['Airline'].isin(outlier_airlines)==False,]
+train_data_filter['Airline'].value_counts()
+```
+
+```{python}
+# Plot avg prices for each airline except 'Jet Airways Business'
+prices_by_airline = train_data_filter.groupby('Airline').mean().plot(kind='bar')
+prices_by_airline.set_xlabel('airline')
+prices_by_airline.set_ylabel('Price')
+prices_by_airline.legend(loc='center left', bbox_to_anchor=(1,0.5))
+```
+
+```{python}
+# Plot avg prices for each source
+prices_by_source = train_data.groupby('Source').mean().plot(kind='bar')
+prices_by_source.set_xlabel('Source location')
+prices_by_source.set_ylabel('Price')
+prices_by_source.legend(loc='center left', bbox_to_anchor=(1,0.5))
+```
+
+```{python}
+# check prices by routes
+train_data['Route'].value_counts()
+```
+
+```{python}
+ train_data[['Source','Destination','Route']].head()
+```
+
+```{python}
+# Define codes for cities
+city_codes = {'Banglore':'BLR','New Delhi':'DEL','Kolkata':'CCU','Cochin':'COK','Mumbai':'BOM','Delhi':'DEL','Hyderabad':'HYD','Chennai':'MAA'}
+city_codes
+```
+
+```{python}
+train_data['Source_Code'] = train_data['Source'].apply(lambda x: city_codes[x])
+train_data['Source_Code'].head()
+```
+
+```{python}
+train_data['Destination_Code'] = train_data['Destination'].apply(lambda x: city_codes[x])
+train_data['Destination_Code'].head()
+```
+
+```{python}
+train_data['Destination_Code'].value_counts()
+```
+
+```{python}
+train_data['Source_Code'].value_counts()
+
+```
+
+```{python}
+train_data['Total_Stops'] = train_data['Total_Stops'].str.replace(' stops','')
+train_data['Total_Stops'] = train_data['Total_Stops'].str.replace(' stop','')
+train_data['Total_Stops'] = train_data['Total_Stops'].replace('non-stop',0)
+train_data['Total_Stops'].value_counts()
+```
+
+```{python}
+train_data.groupby(['Source_Code','Destination_Code','Total_Stops']).count()
+```
+
+```{python}
+train_data.info()
+```
+
+```{python}
+train_data['Total_Stops'] = pd.to_numeric(train_data['Total_Stops'])
+train_data.info()
+```
+
+```{python}
+train_data['Duration'].value_counts()
+```
+
+```{python}
+# Convert '2h 50m' to 170 minutes
+def convert_hours_or_minutes_into_minutes(duration):
+    if(len(duration) == 0):
+        return(0)
+    # Example: '2h' or '30m' or '1h' or '45m' etc.
+    last_char = duration[-1]
+    total_mins = 0
+    if (last_char == 'h'):
+        hours = duration[:-1]
+        total_mins += int(hours)*60
+    elif (last_char == 'm'):
+        minutes = duration[:-1]
+        total_mins += int(minutes)
+    return total_mins
+        
+def convert_duration_into_minutes(duration):
+    splits = duration.strip().split(' ')
+    
+    total_mins = 0
+    
+    for part in splits:
+        total_mins += convert_hours_or_minutes_into_minutes(part)
+    
+    #first = splits[0]
+    #second = splits[1]
+    
+    #total_mins += convert_hours_or_minutes_into_minutes(first)
+    #total_mins += convert_hours_or_minutes_into_minutes(second)
+    return total_mins
+
+```
+
+```{python}
+print(convert_duration_into_minutes('2h 30m'))
+print(convert_duration_into_minutes('30m'))
+print(convert_duration_into_minutes('30m '))
+print(convert_duration_into_minutes('2h'))
+print(convert_duration_into_minutes('2h '))
+```
+
+```{python}
+train_data['Duration_In_Mins'] = train_data['Duration'].apply(lambda x: convert_duration_into_minutes(x))
+train_data['Duration_In_Mins'].head()
+```
+
+```{python}
+train_data.info()
+```
+
+```{python}
+train_data.describe()
+```
+
+```{python}
+train_data_final = train_data[['Airline','Date_of_Journey','Day_name','Source_Code','Destination_Code','Duration_In_Mins','Total_Stops','Price']]
+train_data_final.head()
+```
+
+## Visualise test data set
+
+```{python}
+null_columns = test_data.columns[test_data.isnull().any()]
+test_data[null_columns].isnull().sum() #None
+```
+
+```{python}
+test_data.head()
+```
+
+```{python}
+# Convert Date_of_Journey column to proper datetime column
+test_data['Date_of_Journey'] = pd.to_datetime(test_data['Date_of_Journey'], format='%d/%m/%Y')
+test_data.head()
+```
+
+```{python}
+# Create new column with Day_Name from date
+test_data['Day_name'] = test_data.Date_of_Journey.apply(lambda date: date.day_name())
+test_data['Day_name'].head()
+```
+
+```{python}
+test_data['Source_Code'] = test_data['Source'].apply(lambda x: city_codes[x])
+test_data['Source_Code'].head()
+```
+
+```{python}
+test_data['Destination_Code'] = test_data['Destination'].apply(lambda x: city_codes[x])
+test_data['Destination_Code'].head()
+```
+
+```{python}
+test_data['Total_Stops'] = test_data['Total_Stops'].str.replace(' stops','')
+test_data['Total_Stops'] = test_data['Total_Stops'].str.replace(' stop','')
+test_data['Total_Stops'] = test_data['Total_Stops'].replace('non-stop',0)
+test_data['Total_Stops'].value_counts()
+```
+
+```{python}
+test_data['Total_Stops'] = pd.to_numeric(test_data['Total_Stops'])
+test_data.info()
+```
+
+```{python}
+test_data['Duration_In_Mins'] = test_data['Duration'].apply(lambda x: convert_duration_into_minutes(x))
+test_data['Duration_In_Mins'].head()
+```
+
+```{python}
+test_data.info()
+```
+
+```{python}
+test_data.describe()
+```
+
+```{python}
+test_data_final = test_data[['Airline','Date_of_Journey','Day_name','Source_Code','Destination_Code','Duration_In_Mins','Total_Stops']]
+test_data_final.head()
 ```
 
 ```{python}
