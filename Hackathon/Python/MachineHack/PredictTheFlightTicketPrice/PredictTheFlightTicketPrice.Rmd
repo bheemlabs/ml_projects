@@ -1,0 +1,99 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.0'
+      jupytext_version: 1.0.3
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+```{python}
+# %autosave 0
+```
+
+# Predict the flight ticket price challenge
+
+
+We are provided with prices of flight tickets for various airlines between months of March and June of 2019 and between various cities
+
+
+## Features:
+1. Airline: Name of the airline
+2. Date_of_Journey: The date of journey
+3. Source: The source from which the service begins
+4. Destination: The destination where the service ends
+5. Route: The route taken by the flight to reach the destination
+6. Dep_Time: The time when the journey starts from the source
+7. Arrival_Time: Time of arrival at the destination
+8. Duration: Total duration of the flight
+9. Total_Stops: Total stops between the source and destination
+10. Additional_Info: Additional information about the flight
+11. Price: The price of the ticket
+
+
+## Datasets directory
+` ~\Datasets`
+
+```{python}
+dataset_dir = r'\datasets\\'
+```
+
+## Load required libraries
+
+```{python}
+import os
+import pandas as pd
+import numpy as np
+# Add more libraries here to have them in one place
+```
+
+```{python}
+cwd = os.getcwd()
+dataset_dir = cwd + r'\datasets\\'
+dataset_dir
+```
+
+## Load train and test datasets
+
+```{python}
+train_data = pd.read_excel(dataset_dir + 'train.xlsx')
+test_data = pd.read_excel(dataset_dir + 'test.xlsx')
+
+print(train_data.shape)
+print(test_data.shape)
+```
+
+## Visualise train dataset
+
+```{python}
+train_data.head()
+```
+
+```{python}
+train_data.info()
+```
+
+```{python}
+train_data.describe()
+```
+
+```{python}
+train_data.columns
+```
+
+```{python}
+train_data.values
+```
+
+```{python}
+train_data.values[0]
+```
+
+```{python}
+
+```
