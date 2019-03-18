@@ -95,10 +95,6 @@ train_data.values
 ```
 
 ```{python}
-train_data.values[0]
-```
-
-```{python}
 # Check null columns
 null_columns = train_data.columns[train_data.isnull().any()]
 train_data[null_columns].isnull().sum()
@@ -141,23 +137,43 @@ train_data['Date_of_Journey'].head()
 ```
 
 ```{python}
-# Create new columnd with Day_Name from date to see if Prices are on higher side on weekends
+# Create new column with Day_Name from date to see if Prices are on higher side on weekends
 train_data['Day_name'] = train_data.Date_of_Journey.apply(lambda date: date.day_name())
-train_data['Day_name'].head()
+train_data['Day_name'].head(10)
+```
+
+```{python}
+# create new column with Day of week from date : # Monday = 0
+train_data['Day_of_week'] = train_data.Date_of_Journey.apply(lambda date: date.dayofweek)
+train_data['Day_of_week'].head(10)
+```
+
+```{python}
+# Create new column with Month from date
+train_data['Month'] = train_data.Date_of_Journey.apply(lambda date: date.month)
+train_data['Month'].head()
+```
+
+```{python}
+# Plot avg prices for each month
+prices_by_month = train_data[['Month','Price']].groupby('Month').mean().plot(kind='bar')
+prices_by_month.set_xlabel("Month")
+prices_by_month.set_ylabel("Price")
+prices_by_month.legend(loc='center left', bbox_to_anchor=(1,0.5))
 ```
 
 ```{python}
 # Plot avg Prices for each day name
-prices_by_day = train_data.groupby('Day_name').mean().plot(kind='bar')
-prices_by_day.set_xlabel("Day name")
+prices_by_day = train_data[['Day_of_week','Price']].groupby('Day_of_week').mean().plot(kind='bar')
+prices_by_day.set_xlabel("Day of week")
 prices_by_day.set_ylabel("Price")
 prices_by_day.legend(loc='center left', bbox_to_anchor=(1,0.5))
 ```
 
 ```{python}
 # Plot avg prices for each airline
-prices_by_airline = train_data.groupby('Airline').mean().plot(kind='bar')
-prices_by_airline.set_xlabel('airline')
+prices_by_airline = train_data[['Airline','Price']].groupby('Airline').mean().plot(kind='bar')
+prices_by_airline.set_xlabel('Airline')
 prices_by_airline.set_ylabel('Price')
 prices_by_airline.legend(loc='center left', bbox_to_anchor=(1,0.5))
 
@@ -171,8 +187,8 @@ train_data_filter['Airline'].value_counts()
 
 ```{python}
 # Plot avg prices for each airline except 'Jet Airways Business'
-prices_by_airline = train_data_filter.groupby('Airline').mean().plot(kind='bar')
-prices_by_airline.set_xlabel('airline')
+prices_by_airline = train_data_filter[['Airline','Price']].groupby('Airline').mean().plot(kind='bar')
+prices_by_airline.set_xlabel('Airline')
 prices_by_airline.set_ylabel('Price')
 prices_by_airline.legend(loc='center left', bbox_to_anchor=(1,0.5))
 ```
@@ -220,6 +236,17 @@ train_data['Source_Code'].value_counts()
 ```
 
 ```{python}
+city_code_numeric = {'BLR':0,'BOM':1,'CCU':2,'COK':3,'DEL':4,'HYD':5,'MAA':6}
+train_data['Source_Code_num'] = train_data['Source_Code'].apply(lambda x: city_code_numeric[x])
+train_data['Destination_Code_num'] = train_data['Destination_Code'].apply(lambda x: city_code_numeric[x])
+```
+
+```{python}
+print(train_data['Source_Code_num'].value_counts())
+print(train_data['Destination_Code_num'].value_counts())
+```
+
+```{python}
 train_data['Total_Stops'] = train_data['Total_Stops'].str.replace(' stops','')
 train_data['Total_Stops'] = train_data['Total_Stops'].str.replace(' stop','')
 train_data['Total_Stops'] = train_data['Total_Stops'].replace('non-stop',0)
@@ -231,12 +258,7 @@ train_data.groupby(['Source_Code','Destination_Code','Total_Stops']).count()
 ```
 
 ```{python}
-train_data.info()
-```
-
-```{python}
 train_data['Total_Stops'] = pd.to_numeric(train_data['Total_Stops'])
-train_data.info()
 ```
 
 ```{python}
@@ -290,6 +312,10 @@ train_data['Duration_In_Mins'].head()
 ```
 
 ```{python}
+train_data['Additional_Info'].value_counts() # Lets park this feature for now. Will include if needed
+```
+
+```{python}
 train_data.info()
 ```
 
@@ -298,7 +324,7 @@ train_data.describe()
 ```
 
 ```{python}
-train_data_final = train_data[['Airline','Date_of_Journey','Day_name','Source_Code','Destination_Code','Duration_In_Mins','Total_Stops','Price']]
+train_data_final = train_data[['Airline','Month','Day_of_week','Source_Code_num','Destination_Code_num','Duration_In_Mins','Total_Stops','Price']]
 train_data_final.head()
 ```
 
@@ -326,6 +352,18 @@ test_data['Day_name'].head()
 ```
 
 ```{python}
+# Create new column with Day_of_week from date : # Monday = 0
+test_data['Day_of_week'] = test_data.Date_of_Journey.apply(lambda date: date.dayofweek)
+test_data['Day_of_week'].head()
+```
+
+```{python}
+# Create new column with Month from date
+test_data['Month'] = test_data.Date_of_Journey.apply(lambda date: date.month)
+test_data['Month'].head()
+```
+
+```{python}
 test_data['Source_Code'] = test_data['Source'].apply(lambda x: city_codes[x])
 test_data['Source_Code'].head()
 ```
@@ -333,6 +371,14 @@ test_data['Source_Code'].head()
 ```{python}
 test_data['Destination_Code'] = test_data['Destination'].apply(lambda x: city_codes[x])
 test_data['Destination_Code'].head()
+```
+
+```{python}
+test_data['Source_Code_num'] = test_data['Source_Code'].apply(lambda x: city_code_numeric[x])
+test_data['Destination_Code_num'] = test_data['Destination_Code'].apply(lambda x: city_code_numeric[x])
+
+print(test_data['Source_Code_num'].value_counts())
+print(test_data['Destination_Code_num'].value_counts())
 ```
 
 ```{python}
@@ -361,7 +407,7 @@ test_data.describe()
 ```
 
 ```{python}
-test_data_final = test_data[['Airline','Date_of_Journey','Day_name','Source_Code','Destination_Code','Duration_In_Mins','Total_Stops']]
+test_data_final = test_data[['Airline','Month','Day_of_week','Source_Code_num','Destination_Code_num','Duration_In_Mins','Total_Stops']]
 test_data_final.head()
 ```
 
